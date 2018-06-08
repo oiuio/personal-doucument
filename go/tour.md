@@ -973,7 +973,283 @@ func main() {
 
 nil 切片的长度和容量为 0 且没有底层数组。
 
-#### 
+#### 用 make 创建切片
+``` go
+package main
+
+import "fmt"
+
+func main() {
+	a := make([]int, 5)
+	printSlice("a", a)
+
+	b := make([]int, 0, 5)
+	printSlice("b", b)
+
+	c := b[:2]
+	printSlice("c", c)
+
+	d := c[2:5]
+	printSlice("d", d)
+}
+
+func printSlice(s string, x []int) {
+	fmt.Printf("%s len=%d cap=%d %v\n",
+		s, len(x), cap(x), x)
+}
+
+```
+切片可以用内建函数 make 来创建，这也是你创建动态数组的方式。
+
+make 函数会分配一个元素为零值的数组并返回一个引用了它的切片：
+
+a := make([]int, 5)  // len(a)=5
+要指定它的容量，需向 make 传入第三个参数：
+
+b := make([]int, 0, 5) // len(b)=0, cap(b)=5
+
+b = b[:cap(b)] // len(b)=5, cap(b)=5
+b = b[1:]      // len(b)=4, cap(b)=4
+
+#### 切片的切片
+``` go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	// Create a tic-tac-toe board.
+	board := [][]string{
+		[]string{"_", "_", "_"},
+		[]string{"_", "_", "_"},
+		[]string{"_", "_", "_"},
+	}
+
+	// The players take turns.
+	board[0][0] = "X"
+	board[2][2] = "O"
+	board[1][2] = "X"
+	board[1][0] = "O"
+	board[0][2] = "X"
+
+	for i := 0; i < len(board); i++ {
+		fmt.Printf("%s\n", strings.Join(board[i], " "))
+	}
+}
+```
+切片可包含任何类型，甚至包括其它的切片。
+
+#### 向切片追加元素
+为切片追加新的元素是种常用的操作，为此 Go 提供了内建的 append 函数。内建函数的[文档](https://go-zh.org/pkg/builtin/#append)对此函数有详细的介绍。
+
+func append(s []T, vs ...T) []T
+append 的第一个参数 s 是一个元素类型为 T 的切片，其余类型为 T 的值将会追加到该切片的末尾。
+
+append 的结果是一个包含原切片所有元素加上新添加元素的切片。
+
+当 s 的底层数组太小，不足以容纳所有给定的值时，它就会分配一个更大的数组。返回的切片会指向这个新分配的数组。
+
+（要了解关于切片的更多内容，请阅读文章 [Go 切片：用法和本质](https://blog.go-zh.org/go-slices-usage-and-internals)。）
+
+#### Range
+``` go
+package main
+
+import "fmt"
+
+var pow = []int{1, 2, 4, 8, 16, 32, 64, 128}
+
+func main() {
+	for i, v := range pow {
+		fmt.Printf("2**%d = %d\n", i, v)
+	}
+}
+
+```
+for 循环的 range 形式可遍历切片或映射。
+
+当使用 for 循环遍历切片时，每次迭代都会返回两个值。第一个值为当前元素的下标，第二个值为该下标所对应元素的一份副本。
+
+#### range（续）
+```go
+package main
+
+import "fmt"
+
+func main() {
+	pow := make([]int, 10)
+	for i := range pow {
+		pow[i] = 1 << uint(i) // == 2**i
+	}
+	for _, value := range pow {
+		fmt.Printf("%d\n", value)
+	}
+}
+
+```
+可以将下标或值赋予 _ 来忽略它。
+
+若你只需要索引，去掉 , value 的部分即可。
+
+#### 练习：切片
+```go
+package main
+
+import "golang.org/x/tour/pic"
+
+func Pic(dx, dy int) [][]uint8 {
+}
+
+func main() {
+	pic.Show(Pic)
+}
+```
+实现 Pic。它应当返回一个长度为 dy 的切片，其中每个元素是一个长度为 dx，元素类型为 uint8 的切片。当你运行此程序时，它会将每个整数解释为灰度值（好吧，其实是蓝度值）并显示它所对应的图像。
+
+图像的选择由你来定。几个有趣的函数包括 (x+y)/2, x*y, x^y, x*log(y) 和 x%(y+1)。
+
+（提示：需要使用循环来分配 [][]uint8 中的每个 []uint8；请使用 uint8(intValue) 在类型之间转换；你可能会用到 math 包中的函数。）
+
+#### 映射
+``` go
+package main
+
+import "fmt"
+
+type Vertex struct {
+	Lat, Long float64
+}
+
+var m map[string]Vertex
+
+func main() {
+	m = make(map[string]Vertex)
+	m["Bell Labs"] = Vertex{
+		40.68433, -74.39967,
+	}
+	fmt.Println(m["Bell Labs"])
+}
+
+```
+映射将键映射到值。
+
+映射的零值为 nil 。nil 映射既没有键，也不能添加键。
+
+make 函数会返回给定类型的映射，并将其初始化备用。
+
+#### 映射的文法
+``` go
+package main
+
+import "fmt"
+
+type Vertex struct {
+	Lat, Long float64
+}
+
+var m = map[string]Vertex{
+	"Bell Labs": Vertex{
+		40.68433, -74.39967,
+	},
+	"Google": Vertex{
+		37.42202, -122.08408,
+	},
+}
+
+func main() {
+	fmt.Println(m)
+}
+```
+映射的文法与结构体相似，不过必须有键名。
+
+#### 映射的文法（续）
+``` go
+package main
+
+import "fmt"
+
+type Vertex struct {
+	Lat, Long float64
+}
+
+var m = map[string]Vertex{
+	"Bell Labs": {40.68433, -74.39967},
+	"Google":    {37.42202, -122.08408},
+}
+
+func main() {
+	fmt.Println(m)
+}
+```
+若顶级类型只是一个类型名，你可以在文法的元素中省略它。
+
+#### 修改映射
+``` go
+package main
+
+import "fmt"
+
+func main() {
+	m := make(map[string]int)
+
+	m["Answer"] = 42
+	fmt.Println("The value:", m["Answer"])
+
+	m["Answer"] = 48
+	fmt.Println("The value:", m["Answer"])
+
+	delete(m, "Answer")
+	fmt.Println("The value:", m["Answer"])
+
+	v, ok := m["Answer"]
+	fmt.Println("The value:", v, "Present?", ok)
+}
+
+```
+在映射 m 中插入或修改元素：
+
+m[key] = elem
+获取元素：
+
+elem = m[key]
+删除元素：
+
+delete(m, key)
+通过双赋值检测某个键是否存在：
+
+elem, ok = m[key]
+若 key 在 m 中，ok 为 true；否则，ok 为 false。
+
+若 key 不在映射中，那么 elem 是该映射元素类型的零值。
+
+同样的，当从 映射 中读取某个不存在的键时，结果是 映射 的元素类型的零值。
+
+注 ：若 elem 或 ok 还未声明，你可以使用短变量声明：
+
+elem, ok := m[key]
+
+#### 练习：映射
+``` go
+package main
+
+import (
+	"golang.org/x/tour/wc"
+)
+
+func WordCount(s string) map[string]int {
+	return map[string]int{"x": 1}
+}
+
+func main() {
+	wc.Test(WordCount)
+}
+```
+实现 WordCount。它应当返回一个映射，其中包含字符串 s 中每个“单词”的个数。函数 wc.Test 会对此函数执行一系列测试用例，并输出成功还是失败。
+
+你会发现 [strings.Fields](https://go-zh.org/pkg/strings/#Fields) 很有帮助。
 
 #### 
 
@@ -984,6 +1260,7 @@ nil 切片的长度和容量为 0 且没有底层数组。
 #### 
 
 #### 
+
 
 ## 方法和接口
 
