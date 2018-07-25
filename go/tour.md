@@ -1210,16 +1210,15 @@ func main() {
 
 ```
 在映射 m 中插入或修改元素：
-
 m[key] = elem
+
 获取元素：
-
 elem = m[key]
+
 删除元素：
-
 delete(m, key)
-通过双赋值检测某个键是否存在：
 
+通过双赋值检测某个键是否存在：
 elem, ok = m[key]
 若 key 在 m 中，ok 为 true；否则，ok 为 false。
 
